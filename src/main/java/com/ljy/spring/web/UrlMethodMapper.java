@@ -1,44 +1,58 @@
 package com.ljy.spring.web;
 
 import com.ljy.spring.annotation.LJYRequestMapping;
-import com.ljy.spring.bean.BeanContainer;
-import com.ljy.spring.bean.MethodMapper;
+import com.ljy.spring.bean.BeanMessage;
+import com.ljy.spring.bean.UrlMethodRelate;
+import com.ljy.spring.factory.BeanFactory;
+import com.ljy.spring.factory.UrlFactory;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Set;
 
 /**
  * @ClassName:UrlMethodMapper
  * @Description:url与方法映射
- * @Author: ljy
+ * @Author: ljy.
  * @Date: 2018/7/27
  **/
 public class UrlMethodMapper {
 
+    /**
+     * @author: ljy
+     * @date: 2018/9/4
+     * @description: 建立url与方法的映射关系
+     */
     public static void readUrl() {
-        Set<String> controllerSet = BeanContainer.controllerNameClassMapping.keySet();
-        for (String key : controllerSet) {
-            Object obj = BeanContainer.beanMapping
-                    .get(BeanContainer.controllerNameClassMapping.get(key));
+        for (BeanMessage beanMessage : BeanFactory.instance().gainControllers()) {
+            Object obj = beanMessage.getBean();
             if (obj.getClass().isAnnotationPresent(LJYRequestMapping.class)) {
+                // 获取url注解
                 LJYRequestMapping beanUrlAnno = obj.getClass()
                         .getAnnotation(LJYRequestMapping.class);
+                // 获取类上的url注解
                 String beanUrl = beanUrlAnno.value();
-                Method[] methods = obj.getClass().getDeclaredMethods();
-                for (Method method : methods) {
-                    if (method.isAnnotationPresent(LJYRequestMapping.class)) {
-                        LJYRequestMapping methodAnnotation = method
-                                .getAnnotation(LJYRequestMapping.class);
-                        String methodUrl = methodAnnotation.value();
-                        String url = (beanUrl + methodUrl).replace("//", "/");
-                        MethodMapper methodMapper = new MethodMapper(obj.getClass().getName(),
-                                method.getName());
-                        BeanContainer.urlMapping.put(url, methodMapper);
-                        Class<?>[] parameterTypes = method.getParameterTypes();
-                        methodMapper.getParamTypes().addAll(Arrays.asList(parameterTypes));
-                        System.out.println(methodMapper.getParamTypes());
-                    }
-                }
+                urlRelateMethodProcess(obj, beanUrl);
+            } else {
+                urlRelateMethodProcess(obj, "");
+            }
+        }
+    }
+
+    private static void urlRelateMethodProcess(Object obj, String beanUrl) {
+        // 获取方法
+        Method[] methods = obj.getClass().getDeclaredMethods();
+        for (Method method : methods) {
+            if (method.isAnnotationPresent(LJYRequestMapping.class)) {
+                // 获取方法上的url注解
+                LJYRequestMapping methodAnnotation = method
+                        .getAnnotation(LJYRequestMapping.class);
+                String methodUrl = methodAnnotation.value();
+                // 组合最终的url
+                String url = (beanUrl + methodUrl).replace("//", "/");
+                // 保存url与方法的映射关系
+                UrlMethodRelate urlMethodRelate = new UrlMethodRelate();
+                urlMethodRelate.setUrl(url);
+                urlMethodRelate.setClassName(obj.getClass().getName());
+                urlMethodRelate.setMethodName(method.getName());
+                UrlFactory.instance().addUrlMethodRelate(urlMethodRelate);
             }
         }
     }

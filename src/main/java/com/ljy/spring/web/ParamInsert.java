@@ -2,9 +2,9 @@ package com.ljy.spring.web;
 
 import com.ljy.spring.annotation.LJYAutowired;
 import com.ljy.spring.annotation.LJYResource;
-import com.ljy.spring.bean.BeanContainer;
+import com.ljy.spring.bean.BeanMessage;
+import com.ljy.spring.factory.BeanFactory;
 import java.lang.reflect.Field;
-import java.util.Collection;
 
 /**
  * @ClassName:ParamInsert
@@ -14,10 +14,15 @@ import java.util.Collection;
  **/
 public class ParamInsert {
 
+    /**
+     * @author: ljy
+     * @date: 2018/9/5
+     * @description: 为对象的成员变量注入对象
+     */
     public static void insert() {
         try {
-            Collection<Object> objects = BeanContainer.beanMapping.values();
-            for (Object obj : objects) {
+            for (BeanMessage beanMessage : BeanFactory.instance().getBeans()) {
+                Object obj = beanMessage.getBean();
                 Class<?> aClass = obj.getClass();
                 Field[] fields = obj.getClass().getDeclaredFields();
                 for (Field f : fields) {
@@ -31,12 +36,12 @@ public class ParamInsert {
                             String n = resource.name();
                             if (n == null || "".equals(n)) {
                                 Class<?> type = f.getType();
-                                beanInsert(obj, f, BeanContainer.nameClassMapping.get(value));
+                                beanInsert(obj, f, n);
                             } else {
                                 beanInsert(obj, f, f.getType().getName());
                             }
                         } else {
-                            beanInsert(obj, f, BeanContainer.nameClassMapping.get(value));
+                            beanInsert(obj, f, value);
                         }
                     }
                 }
@@ -46,14 +51,15 @@ public class ParamInsert {
         }
     }
 
+    /**
+     * @author: ljy
+     * @date: 2018/9/5
+     * @description: 反射注入变量
+     */
     private static void beanInsert(Object obj, Field f, String name)
             throws IllegalAccessException {
-        Object aopObj = BeanContainer.aopProxyBeanMapping.get(name);
-        if (aopObj != null) {
-            f.set(obj, aopObj);
-        } else {
-            f.set(obj, BeanContainer.beanMapping.get(name));
-        }
+        BeanMessage beanMessage = BeanFactory.instance().gainBean(name);
+        f.set(obj, beanMessage.gainObject());
     }
 
 }

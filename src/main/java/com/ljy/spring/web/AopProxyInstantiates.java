@@ -2,11 +2,11 @@ package com.ljy.spring.web;
 
 import com.ljy.spring.annotation.LJYAop;
 import com.ljy.spring.aop.Aop;
-import com.ljy.spring.bean.BeanContainer;
+import com.ljy.spring.bean.BeanMessage;
+import com.ljy.spring.factory.BeanFactory;
 import com.ljy.spring.proxy.SonProxy;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Map;
 import net.sf.cglib.proxy.MethodProxy;
 
 /**
@@ -17,31 +17,49 @@ import net.sf.cglib.proxy.MethodProxy;
  **/
 public class AopProxyInstantiates {
 
+    /**
+     * @author: ljy
+     * @date: 2018/9/4
+     * @description: aop对象的实例化
+     */
     public static void instan() {
-        for (Object obj : BeanContainer.beanMapping.values()) {
-            if (obj.getClass().isAnnotationPresent(LJYAop.class)){
-                process(obj, null);
-            } else {
-                Method[] methods = obj.getClass().getMethods();
-                for (final Method method : methods) {
-                    if (method.isAnnotationPresent(LJYAop.class)) {
-                        process(obj, method);
-                    }
+        // 遍历所有的bean
+        for (BeanMessage beanMessage : BeanFactory.instance().getBeans()) {
+            Object obj = beanMessage.getBean();
+            // 获取对象的所有方法
+            Method[] methods = obj.getClass().getDeclaredMethods();
+            // 遍历方法
+            for (final Method method : methods) {
+                // 若方法上有LJYAop注解，则进行aop对象的反向生成
+                if (method.isAnnotationPresent(LJYAop.class)) {
+                    process(obj, method);
                 }
             }
+            if (obj.getClass().isAnnotationPresent(LJYAop.class)){
+                process(obj, null);
+            }
         }
-        Map<String, Object> aopProxyBeanMapping = BeanContainer.aopProxyBeanMapping;
-        System.out.println(aopProxyBeanMapping);
     }
 
+    /**
+     * @author: ljy
+     * @date: 2018/9/4
+     * @description: aop代理对象反向生成
+     */
     private static void process(final Object obj, final Method method) {
+        // 创建LJYAop对象
         LJYAop aopAnno = null;
+        // 若是方法上的aop，则获取之，否则获取类上的aop
         if (method != null) aopAnno = method.getAnnotation(LJYAop.class);
         else aopAnno = obj.getClass().getAnnotation(LJYAop.class);
+        // 获取aop的名称
         String aopBeanName = aopAnno.aopBeanName();
+        // 获取aop的类型
         final String aopType = aopAnno.aopType();
-        final Aop aopBean = (Aop) BeanContainer.beanMapping
-                .get(BeanContainer.aopNameClassMapping.get(aopBeanName));
+        // 获取aop对象
+        BeanMessage beanMessage = BeanFactory.instance().gainBean(aopBeanName);
+        final Aop aopBean = (Aop) beanMessage.getBean();
+        // 生成代理对象，使用子类代理方式
         Object proxy = new SonProxy(obj) {
             @Override
             public Object intercept(Object o, Method m, Object[] objects,
@@ -59,6 +77,7 @@ public class AopProxyInstantiates {
 
             private Object getObject(Method m, Object[] objects)
                     throws IllegalAccessException, InvocationTargetException {
+                // 根据aop类型进行不同的执行顺序
                 if (LJYAop.PRO.equals(aopType)) {
                     aopBean.pro();
                     return m.invoke(obj, objects);
@@ -73,21 +92,8 @@ public class AopProxyInstantiates {
                 return null;
             }
         }.getProxy();
-        BeanContainer.aopProxyBeanMapping.put(obj.getClass().getName(), proxy);
-    }
-
-    /*
-    private static boolean hasInterface(Class<?> aClass) {
-        Class<?>[] interfaces = aClass.getInterfaces();
-        if (interfaces != null && interfaces.length > 0) return true;
-        if (aClass.getSuperclass() != null) return hasInterface(aClass.getSuperclass());
-        return false;
-    }*/
-
-    public static void main(String[] args) {
-        String a = "a";
-        Object b = a;
-        Class clazz = b.getClass();
+        // 设置代理对象
+        BeanFactory.instance().gainBean(obj.getClass().getName()).setAop(proxy);
     }
 
 }

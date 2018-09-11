@@ -22,32 +22,36 @@ public class DispatcherServlet extends HttpServlet{
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        System.out.println("URI:"+req.getRequestURI());
-        resp.setHeader("Content-type", "text/html;charset=UTF-8");
-        resp.setCharacterEncoding("utf-8");
-        String responseCode = ObjectInvoke.invoke(req, resp);
-        if ("404".equals(responseCode)) {
-            PrintWriter writer = resp.getWriter();
-            writer.write("\n"
-                    + "<!DOCTYPE html>\n"
-                    + "<html>\n"
-                    + "<head>\n"
-                    + "\t<meta charset=\"utf-8\">\n"
-                    + "\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1\">\n"
-                    + "\t<title>myspring</title>\n"
-                    + "</head>\n"
-                    + "<body class=\"layui-layout-body\">\n"
-                    + "<h1>404，无法找到页面!</h1>\n"
-                    + "</body>\n"
-                    + "</html>");
-            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        try {
+            resp.setHeader("Content-type", "text/html;charset=UTF-8");
+            resp.setCharacterEncoding("utf-8");
+            // 反射执行
+            String responseCode = ObjectInvoke.invoke(req, resp);
+            // 404处理
+            if ("404".equals(responseCode)) {
+                PrintWriter writer = resp.getWriter();
+                writer.write("\n"
+                        + "<!DOCTYPE html>\n"
+                        + "<html>\n"
+                        + "<head>\n"
+                        + "\t<meta charset=\"utf-8\">\n"
+                        + "\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1\">\n"
+                        + "\t<title>myspring</title>\n"
+                        + "</head>\n"
+                        + "<body class=\"layui-layout-body\">\n"
+                        + "<h1>404，无法找到页面!</h1>\n"
+                        + "</body>\n"
+                        + "</html>");
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     @Override
     public void init() throws ServletException {
         super.init();
-        int i = 0;
         // 类注解扫描
         ClassAnnotationReader.read();
         // 对象实例化

@@ -1,20 +1,14 @@
 package com.ljy.spring.web;
 
-import com.ljy.spring.bean.BeanContainer;
-import com.ljy.spring.bean.MethodMapper;
-import com.ljy.spring.controller.TestController;
+import com.ljy.spring.bean.BeanMessage;
+import com.ljy.spring.bean.BeanMessage.MethodMessage;
+import com.ljy.spring.bean.UrlMethodRelate;
+import com.ljy.spring.factory.BeanFactory;
+import com.ljy.spring.factory.UrlFactory;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtMethod;
-import javassist.bytecode.CodeAttribute;
-import javassist.bytecode.LocalVariableAttribute;
-import javassist.bytecode.MethodInfo;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -28,62 +22,42 @@ public class ObjectInvoke {
 
     public static String invoke(HttpServletRequest req, HttpServletResponse resp) {
         try {
+            // 获取请求uri
             String uri = req.getRequestURI().toString();
+            // 处理uri后面拼接的参数
             if(uri.lastIndexOf("?") != -1) uri = uri.substring(0, uri.lastIndexOf("?"));
-            MethodMapper methodMapper = BeanContainer.urlMapping.get(uri);
-            if (methodMapper == null) return "404";
-            Object obj = BeanContainer.beanMapping.get(methodMapper.getClassName());
-            String methodName = methodMapper.getMethodName();
-            List<Class> paramTypes = methodMapper.getParamTypes();
-            Method method = obj.getClass().getDeclaredMethod(methodMapper.getMethodName(), paramTypes.toArray(new Class[methodMapper.getParamTypes().size()]));
-            List<String> paramNames = null;
-            if (methodMapper.getParamNames() == null || methodMapper.getParamNames().size() <= 0) {
-                paramNames = getParamNames(methodName);
-                methodMapper.setParamNames(paramNames);
-            } else {
-                paramNames = methodMapper.getParamNames();
-            }
-            System.out.println("方法的参数名称列表：" + paramNames);
+            // 通过uri获取对应的UrlMethodRelate
+            UrlMethodRelate urlMethodRelate = UrlFactory.instance().gainUrlMethodRelate(uri);
+            if (urlMethodRelate == null) return "404";
+            // 获取对应的BeanMessage
+            BeanMessage beanMessage = BeanFactory.instance().gainBean(urlMethodRelate.getClassName());
+            // 获取要执行的对象
+            Object obj = beanMessage.gainInvokeObj();
+            // 获取方法信息对象
+            MethodMessage mm = beanMessage.gainMethod(urlMethodRelate.getMethodName());
+            // 获取方法
+            Method method = mm.getMethod();
+            // 获取入参类型列表
+            List<Class> paramTypes = mm.getParamTypes();
+            // 获取入参名称列表
+            List<String> paramNames = mm.getParamNames();
+            // 创建入参map
             Map<String, Object> params = new LinkedHashMap<>();
+            // 遍历入参名称列表，匹配入参
             for (String paramName : paramNames) {
                 params.put(paramName, req.getParameter(paramName));
                 if (paramTypes.get(paramNames.indexOf(paramName)).equals(HttpServletRequest.class)) params.put(paramName, req);
                 if (paramTypes.get(paramNames.indexOf(paramName)).equals(HttpServletResponse.class)) params.put(paramName, resp);
             }
+            // 反射执行对象的方法
             method.invoke(obj, params.values().toArray(new Object[params.size()]));
             return "200";
         } catch (Exception e) {
-            e.printStackTrace();
+             e.printStackTrace();
             return "500";
         }
     }
 
-    private static List<String> getParamNames(String methodName) throws Exception {
-        List<String> paramNames = new ArrayList<>();
-        Class<?> clazz = TestController.class;
-        ClassPool pool = ClassPool.getDefault();
-        try {
-            CtClass ctClass = pool.get(clazz.getName());
-            CtMethod ctMethod = ctClass.getDeclaredMethod(methodName);
 
-            // 使用javassist的反射方法的参数名
-            MethodInfo methodInfo = ctMethod.getMethodInfo();
-            CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
-            LocalVariableAttribute attr = (LocalVariableAttribute) codeAttribute
-                    .getAttribute(LocalVariableAttribute.tag);
-            if (attr != null) {
-                int len = ctMethod.getParameterTypes().length;
-                // 非静态的成员函数的第一个参数是this
-                int pos = Modifier.isStatic(ctMethod.getModifiers()) ? 0 : 1;
-                for (int i = 0; i < len; i++) {
-                    paramNames.add(attr.variableName(i + pos));
-                }
-            }
-            return paramNames;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 
 }
