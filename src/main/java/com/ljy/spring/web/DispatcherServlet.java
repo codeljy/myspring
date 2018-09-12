@@ -30,18 +30,8 @@ public class DispatcherServlet extends HttpServlet{
             // 404处理
             if ("404".equals(responseCode)) {
                 PrintWriter writer = resp.getWriter();
-                writer.write("\n"
-                        + "<!DOCTYPE html>\n"
-                        + "<html>\n"
-                        + "<head>\n"
-                        + "\t<meta charset=\"utf-8\">\n"
-                        + "\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1\">\n"
-                        + "\t<title>myspring</title>\n"
-                        + "</head>\n"
-                        + "<body class=\"layui-layout-body\">\n"
-                        + "<h1>404，无法找到页面!</h1>\n"
-                        + "</body>\n"
-                        + "</html>");
+                writer.write("404");
+                writer.close();
                 resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
         } catch (Exception e) {

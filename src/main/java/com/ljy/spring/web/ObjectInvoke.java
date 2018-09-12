@@ -1,10 +1,12 @@
 package com.ljy.spring.web;
 
+import com.alibaba.fastjson.JSON;
 import com.ljy.spring.bean.BeanMessage;
 import com.ljy.spring.bean.BeanMessage.MethodMessage;
 import com.ljy.spring.bean.UrlMethodRelate;
 import com.ljy.spring.factory.BeanFactory;
 import com.ljy.spring.factory.UrlFactory;
+import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,11 +48,18 @@ public class ObjectInvoke {
             // 遍历入参名称列表，匹配入参
             for (String paramName : paramNames) {
                 params.put(paramName, req.getParameter(paramName));
-                if (paramTypes.get(paramNames.indexOf(paramName)).equals(HttpServletRequest.class)) params.put(paramName, req);
-                if (paramTypes.get(paramNames.indexOf(paramName)).equals(HttpServletResponse.class)) params.put(paramName, resp);
             }
             // 反射执行对象的方法
-            method.invoke(obj, params.values().toArray(new Object[params.size()]));
+            Object result = method.invoke(obj, params.values().toArray(new Object[params.size()]));
+            // 将结果返回
+            String respString = obj.getClass().getName()+"."+method.getName()+"返回null!";
+            if (result != null) {
+                if (result instanceof String) respString = result.toString();
+                else respString = JSON.toJSONString(result);
+            }
+            PrintWriter writer = resp.getWriter();
+            writer.write(respString);
+            writer.close();
             return "200";
         } catch (Exception e) {
              e.printStackTrace();

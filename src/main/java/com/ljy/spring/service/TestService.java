@@ -16,9 +16,9 @@ public class TestService {
     public String getPeople(String name) {
         if (name == null || "".equals(name)) return "No Name:age-?,sex-?";
         switch (name){
-            case "子羽":
+            case "ljy":
                 return "ljy:age-23,sex-mail";
-            case "haha":
+            case "泷泽萝拉":
                 return "泷泽萝拉:age-24,sex-femail";
             case "pei":
                 return "波多野结衣:age-26,sex-femail";
