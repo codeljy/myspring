@@ -59,13 +59,4 @@ public class ClassAnnotationReader {
         }
     }
 
-    /*public static void main(String[] args) throws Exception {
-        ClassAnnotationReader.read();
-        Map<String, MethodMapper> urlMapping = BeanContainer.urlMapping;
-        Map<String, Object> beanMapping = BeanContainer.beanMapping;
-        Map<String, String> controllerNameClassMapping = BeanContainer.controllerNameClassMapping;
-        Map<String, String> serviceNameClassMapping = BeanContainer.serviceNameClassMapping;
-        System.out.println("hehe");
-    }*/
-
 }

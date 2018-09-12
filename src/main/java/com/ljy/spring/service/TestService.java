@@ -17,13 +17,13 @@ public class TestService {
         if (name == null || "".equals(name)) return "No Name:age-?,sex-?";
         switch (name){
             case "ljy":
-                return "ljy:age-23,sex-mail";
+                return "Hello "+name+"!(age-23,sex-mail)";
             case "泷泽萝拉":
-                return "泷泽萝拉:age-24,sex-femail";
-            case "pei":
-                return "波多野结衣:age-26,sex-femail";
+                return "Hello "+name+"!(age-24,sex-femail)";
+            case "波多野结衣":
+                return "Hello "+name+"!(age-27,sex-femail)";
             default:
-                return "No Name:age-?,sex-?";
+                return "Who are you?";
         }
     }
 
