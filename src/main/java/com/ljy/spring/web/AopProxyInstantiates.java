@@ -57,7 +57,7 @@ public class AopProxyInstantiates {
         // 获取aop的类型
         final String aopType = aopAnno.aopType();
         // 获取aop对象
-        BeanMessage beanMessage = BeanFactory.instance().gainBean(aopBeanName);
+        BeanMessage beanMessage = BeanFactory.instance().gainBean(aopBeanName); 
         final Aop aopBean = (Aop) beanMessage.getBean();
         // 生成代理对象，使用子类代理方式
         Object proxy = new SonProxy(obj) {
