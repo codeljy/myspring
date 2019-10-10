@@ -44,7 +44,7 @@ public class ClassAnnotationReader {
                 fileRead(f);
             } else {
                 // 将路径中的\转换为.
-                String path = f.getPath().replace("\\", ".");
+                String path = f.getPath().replace(File.separator, ".");
                 // 非class文件则跳过
                 if (!path.endsWith(".class")) continue;
                 String className = path
